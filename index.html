@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VV DOUBLE 跑馬燈產生器</title>
+<style>
+  :root{
+    --blue:#4472C4;
+    --orange:#ED7D31;
+    --lightbg:#DEE5F2;
+    --slate:#33415C;
+    --line:#d9e0ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#f4f6fb;
+    color:var(--slate);
+    line-height:1.6;
+    padding:24px 16px 60px;
+  }
+  .wrap{max-width:860px;margin:0 auto;}
+  h1{font-size:22px;margin-bottom:4px;}
+  .sub{font-size:13px;color:#7a8296;margin-bottom:22px;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow:0 2px 10px rgba(51,65,92,.05);
+  }
+  .card h2{
+    font-size:15px;
+    color:var(--blue);
+    margin-bottom:16px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h2 .num{
+    background:var(--blue);color:#fff;
+    width:22px;height:22px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;flex:0 0 auto;
+  }
+
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--slate);}
+  textarea,input[type=text]{
+    width:100%;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;font-size:14px;font-family:inherit;color:var(--slate);
+    resize:vertical;
+  }
+  textarea:focus,input[type=text]:focus{outline:none;border-color:var(--blue);}
+  .hint{font-size:12px;color:#9aa1b3;margin-top:5px;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+  @media(max-width:620px){.grid{grid-template-columns:1fr;}}
+
+  .colorrow{display:flex;align-items:center;gap:10px;}
+  input[type=color]{
+    width:44px;height:36px;border:1px solid var(--line);border-radius:8px;
+    padding:2px;background:#fff;cursor:pointer;
+  }
+  .hexbox{flex:1;}
+  input[type=range]{width:100%;accent-color:var(--blue);}
+  .rangeval{font-size:13px;font-weight:700;color:var(--orange);min-width:52px;text-align:right;}
+  .rangewrap{display:flex;align-items:center;gap:10px;}
+
+  .toggles{display:flex;gap:22px;flex-wrap:wrap;margin-top:4px;}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer;}
+  .toggle input{width:16px;height:16px;accent-color:var(--blue);}
+
+  /* preview */
+  .preview-label{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--slate);}
+  .vv-marquee{overflow:hidden;white-space:nowrap;border-radius:8px;}
+  .vv-marquee__track{display:inline-flex;width:max-content;}
+  .vv-marquee:hover .vv-marquee__track{animation-play-state:paused;}
+
+  .codebox{
+    width:100%;border:1px solid var(--line);border-radius:9px;
+    padding:12px;font-size:12px;font-family:"SFMono-Regular",Consolas,monospace;
+    background:#fbfcfe;color:#3a4256;min-height:120px;resize:vertical;line-height:1.55;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--blue);color:#fff;border:none;
+    padding:10px 18px;border-radius:9px;font-size:14px;font-weight:700;
+    cursor:pointer;font-family:inherit;margin-top:12px;
+  }
+  .btn:hover{background:#3a63b0;}
+  .btn.copied{background:#2f9e5f;}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tab{
+    flex:1;padding:9px;border:1px solid var(--line);border-radius:9px;
+    background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#7a8296;
+    font-family:inherit;
+  }
+  .tab.active{background:var(--lightbg);border-color:var(--blue);color:var(--blue);}
+  .tab-desc{font-size:12px;color:#9aa1b3;margin-bottom:10px;}
+
+  .steps{font-size:13px;color:#5a6277;padding-left:4px;}
+  .steps li{margin-bottom:7px;list-style:none;position:relative;padding-left:22px;}
+  .steps li::before{
+    content:counter(s);counter-increment:s;
+    position:absolute;left:0;top:1px;
+    background:var(--lightbg);color:var(--blue);
+    width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .steps{counter-reset:s;}
+  .steps b{color:var(--slate);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VV DOUBLE 跑馬燈產生器</h1>
+  <div class="sub">自訂文字 · 顏色 · 大小 · 速度，即時預覽並複製語法到 Shopline</div>
+
+  <!-- 1 內容 -->
+  <div class="card">
+    <h2><span class="num">1</span>跑馬燈文字</h2>
+    <label>要顯示的內容（一行一則活動，會用分隔符號串起來）</label>
+    <textarea id="text" rows="3">滿2200折200
+滿3000折350
+全館3件88折</textarea>
+    <div class="hint">跑起來會像：滿2200折200 ❗ 滿3000折350 ❗ 全館3件88折 ❗ …循環</div>
+    <div style="margin-top:14px;max-width:220px;">
+      <label>分隔符號</label>
+      <input type="text" id="sep" value="❗">
+    </div>
+  </div>
+
+  <!-- 2 樣式 -->
+  <div class="card">
+    <h2><span class="num">2</span>顏色與大小</h2>
+    <div class="grid">
+      <div>
+        <label>文字顏色</label>
+        <div class="colorrow">
+          <input type="color" id="fg" value="#D6336C">
+          <input type="text" class="hexbox" id="fgHex" value="#D6336C">
+        </div>
+      </div>
+      <div>
+        <label>底色（背景）</label>
+        <div class="colorrow">
+          <input type="color" id="bg" value="#F8C8D4">
+          <input type="text" class="hexbox" id="bgHex" value="#F8C8D4">
+        </div>
+      </div>
+      <div>
+        <label>文字大小</label>
+        <div class="rangewrap">
+          <input type="range" id="size" min="12" max="32" value="18">
+          <span class="rangeval" id="sizeVal">18 px</span>
+        </div>
+      </div>
+      <div>
+        <label>滾動速度</label>
+        <div class="rangewrap">
+          <input type="range" id="speed" min="1" max="10" value="5">
+          <span class="rangeval" id="speedVal">中</span>
+        </div>
+      </div>
+      <div>
+        <label>上下留白</label>
+        <div class="rangewrap">
+          <input type="range" id="pad" min="4" max="20" value="10">
+          <span class="rangeval" id="padVal">10 px</span>
+        </div>
+      </div>
+      <div>
+        <label>其他</label>
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" id="bold" checked>粗體</label>
+          <label class="toggle"><input type="checkbox" id="pause" checked>滑鼠移上暫停</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 預覽 -->
+  <div class="card">
+    <h2><span class="num">3</span>即時預覽</h2>
+    <div id="preview"></div>
+  </div>
+
+  <!-- 4 語法 -->
+  <div class="card">
+    <h2><span class="num">4</span>複製語法</h2>
+    <div class="tabs">
+      <button class="tab active" data-mode="html">整段 HTML（Layout Engine / 進階分頁）</button>
+      <button class="tab" data-mode="css">自訂 CSS（搭配內建公告列）</button>
+    </div>
+    <div class="tab-desc" id="tabDesc">貼到有開通 Layout Engine 的 HTML 區塊，或進階分頁的自訂 HTML 元件。</div>
+    <textarea class="codebox" id="code" readonly></textarea>
+    <button class="btn" id="copyBtn">📋 複製語法</button>
+  </div>
+
+  <!-- 使用說明 -->
+  <div class="card">
+    <h2><span class="num">?</span>Shopline 貼在哪裡</h2>
+    <ol class="steps" id="steps">
+    </ol>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let mode = 'html';
+
+const speedLabels = {1:'很慢',2:'慢',3:'慢',4:'偏慢',5:'中',6:'偏快',7:'快',8:'快',9:'很快',10:'超快'};
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function buildText(){
+  const sep = $('sep').value.trim();
+  const lines = $('text').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(lines.length===0) return '滿額有折扣';
+  const joiner = sep ? '  ' + sep + '  ' : '   ';
+  return lines.join(joiner) + '  ' + (sep || '') + '  ';
+}
+
+// rough on-screen width of a string at given font size
+function estWidth(str, size){
+  let w = 0;
+  for(const ch of str){
+    const code = ch.codePointAt(0);
+    if(code > 0x1F000) w += size * 1.2;        // emoji
+    else if(code >= 0x2E80) w += size;         // CJK / full-width
+    else if(ch === ' ') w += size * 0.3;       // space
+    else w += size * 0.55;                     // latin / digit / punctuation
+  }
+  return w;
+}
+
+function pxPerSec(){ return 40 + (+$('speed').value - 1) * (120/9); } // speed 1..10 -> 40..160 px/s
+
+// repeat the phrase enough times to be wider than any screen -> no blank gap
+function repeatInfo(){
+  const unit = buildText();
+  const size = +$('size').value;
+  const uw = estWidth(unit, size) || 1;
+  let reps = Math.ceil(2800 / uw) + 1;         // fill ~2800px wide + margin
+  reps = Math.max(2, Math.min(reps, 40));
+  const group = unit.repeat(reps);
+  const dur = (uw * reps / pxPerSec()).toFixed(1);
+  return { group, dur };
+}
+
+function config(){
+  const { group, dur } = repeatInfo();
+  return {
+    group,
+    fg: $('fg').value,
+    bg: $('bg').value,
+    size: +$('size').value,
+    pad: +$('pad').value,
+    bold: $('bold').checked,
+    pause: $('pause').checked,
+    dur
+  };
+}
+
+function htmlCode(c){
+  const weight = c.bold ? '700' : '400';
+  const item = esc(c.group);
+  const pauseCss = c.pause ? '\n.vv-marquee:hover .vv-marquee__track{animation-play-state:paused;}' : '';
+  return `<div class="vv-marquee">
+  <div class="vv-marquee__track">
+    <span class="vv-marquee__item">${item}</span>
+    <span class="vv-marquee__item" aria-hidden="true">${item}</span>
+  </div>
+</div>
+<style>
+.vv-marquee{overflow:hidden;white-space:nowrap;background:${c.bg};padding:${c.pad}px 0;}
+.vv-marquee__track{display:inline-flex;width:max-content;animation:vv-scroll ${c.dur}s linear infinite;}
+.vv-marquee__item{color:${c.fg};font-size:${c.size}px;font-weight:${weight};padding-right:0;letter-spacing:.5px;}
+@keyframes vv-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}${pauseCss}
+</style>`;
+}
+
+function cssCode(c){
+  const weight = c.bold ? '700' : '400';
+  return `/* VV DOUBLE 跑馬燈樣式 —— 貼到 網店設計 > 設計 > 進階設定 > 自訂 CSS */
+/* 註：Shopline 內建公告列的 class 可能因版型而異，若無效請用瀏覽器檢查實際 class 名稱後替換 */
+.marquee, .announcement-bar, .marquee-bar{
+  background:${c.bg} !important;
+  padding:${c.pad}px 0 !important;
+}
+.marquee *, .announcement-bar *, .marquee-bar *{
+  color:${c.fg} !important;
+  font-size:${c.size}px !important;
+  font-weight:${weight} !important;
+  letter-spacing:.5px;
+}`;
+}
+
+function render(){
+  const c = config();
+  // preview
+  const weight = c.bold ? '700' : '400';
+  const pauseAttr = c.pause ? '' : '';
+  $('preview').innerHTML =
+    `<div class="preview-label">預覽（滑鼠移到上面可暫停）</div>
+     <div class="vv-marquee" style="background:${c.bg};padding:${c.pad}px 0;">
+       <div class="vv-marquee__track" style="animation:vv-scroll ${c.dur}s linear infinite;">
+         <span class="vv-marquee__item" style="color:${c.fg};font-size:${c.size}px;font-weight:${weight};letter-spacing:.5px;">${esc(c.group)}</span>
+         <span class="vv-marquee__item" style="color:${c.fg};font-size:${c.size}px;font-weight:${weight};letter-spacing:.5px;" aria-hidden="true">${esc(c.group)}</span>
+       </div>
+     </div>`;
+  // code
+  $('code').value = mode==='html' ? htmlCode(c) : cssCode(c);
+  // labels
+  $('sizeVal').textContent = c.size + ' px';
+  $('padVal').textContent = c.pad + ' px';
+  $('speedVal').textContent = speedLabels[+$('speed').value];
+}
+
+// keyframes for preview
+const style = document.createElement('style');
+style.textContent = '@keyframes vv-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}';
+document.head.appendChild(style);
+
+// bind color <-> hex
+function syncColor(colorId, hexId){
+  $(colorId).addEventListener('input',()=>{ $(hexId).value=$(colorId).value.toUpperCase(); render();});
+  $(hexId).addEventListener('input',()=>{
+    let v=$(hexId).value.trim(); if(!v.startsWith('#'))v='#'+v;
+    if(/^#[0-9A-Fa-f]{6}$/.test(v)){ $(colorId).value=v; render();}
+  });
+}
+syncColor('fg','fgHex');
+syncColor('bg','bgHex');
+
+['text','sep','size','speed','pad','bold','pause'].forEach(id=>{
+  $(id).addEventListener('input',render);
+});
+
+// tabs
+const htmlDesc='貼到有開通 Layout Engine 的 HTML 區塊，或進階分頁的自訂 HTML 元件。';
+const cssDesc='用內建公告列打文字，再把這段貼到「自訂 CSS」欄位覆蓋樣式（免費，不需 Layout Engine）。';
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    mode=t.dataset.mode;
+    $('tabDesc').textContent = mode==='html'?htmlDesc:cssDesc;
+    render();
+  });
+});
+
+// copy
+$('copyBtn').addEventListener('click',()=>{
+  $('code').select();
+  navigator.clipboard.writeText($('code').value).then(()=>{
+    const b=$('copyBtn'); b.textContent='✓ 已複製'; b.classList.add('copied');
+    setTimeout(()=>{b.textContent='📋 複製語法';b.classList.remove('copied');},1600);
+  });
+});
+
+// steps
+$('steps').innerHTML = `
+  <li><b>路線 A（有 Layout Engine）：</b>後台 → 網店設計 → 找到頁首/HTML 區塊 → 貼上「整段 HTML」那一份。</li>
+  <li><b>路線 B（沒 Layout Engine）：</b>先到 網店設計 → 用內建的<b>公告列/跑馬燈</b>把文字打進去。</li>
+  <li>再到 網店設計 → <b>設計 → 進階設定 → 自訂 CSS</b>，貼上「自訂 CSS」那一份調顏色跟大小（此欄位免費）。</li>
+  <li>兩條路線都記得先按<b>預覽</b>確認，沒問題再<b>發布</b>。</li>
+`;
+
+render();
+</script>
+</body>
+</html>
